@@ -31,16 +31,27 @@ while len(rows_accumulated) < total_rows:
 
 # Write a CSV file
 if rows_accumulated:
-    with open("tweet_eval_sentiment_dataset.csv", "w", newline='', encoding='utf-8') as csvfile:
+    with open("test_sentiment_dataset.csv", "w", newline='', encoding='utf-8') as csvfile:
         fieldnames = ['text', 'label']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
         for row in rows_accumulated[:total_rows]:
-            text = row.get('row', {}).get('text', '')
             label = row.get('row', {}).get('label', '')
-            writer.writerow({'text': text, 'label': label})
+            if label in [0,2]:
+                if label == 2:
+                    label = 1
+                text = row.get('row', {}).get('text', '')
+                writer.writerow({'text': text, 'label': label})
+
+            # text = row.get('row', {}).get('text', '')
+            # label = row.get('row', {}).get('label', '')
+            # print(type(label))
+            # writer.writerow({'text': text, 'label': label})
 
     print("CSV file created successfully!")
 else:
     print("No data fetched.")
+
+
+
