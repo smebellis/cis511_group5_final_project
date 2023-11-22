@@ -1,3 +1,4 @@
+from collections import Counter
 import math
 
 import csv
@@ -5,7 +6,15 @@ import re
 import nltk
 from nltk import DecisionTreeClassifier
 from nltk.corpus import stopwords
+import pandas as pd
+from sklearn.metrics import confusion_matrix
 
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import pickle
+import os.path
 
 # Step 1: Implement TF-IDF
 def calculate_tf(text):
@@ -41,6 +50,7 @@ def clean_text(text):
     # Remove special symbols and links
     text = re.sub(r'http\S+|www.\S+', '', text)
     text = re.sub(r'[^\w\s]', ' ', text)
+    text = re.sub(r'br', ' ', text)
     # Remove continuous punctuation
     text = re.sub(r'(\W)\1+', r'\1', text)
     # Remove stopwords using NLTK
@@ -86,12 +96,53 @@ for text in test_texts:
 def tfidf_to_features(tfidf_vector):
     return dict(zip(tfidf_vector.keys(), tfidf_vector.values()))
 
-
 train_features = [(tfidf_to_features(vector), label) for vector, label in zip(train_tfidf_vectors, train_labels)]
 test_features = [(tfidf_to_features(vector), label) for vector, label in zip(test_tfidf_vectors, test_labels)]
 
-# Train Decision Tree Classifier
-clf = DecisionTreeClassifier.train(train_features)
+# combine all cleaned text into one string
+wc_training_texts = ' '.join(train_texts)
+
+# Generate a word cloud image
+wordcloud = WordCloud(width=800, height=400).generate(wc_training_texts)
+
+plt.figure(figsize=(8, 8), facecolor=None)
+plt.imshow(wordcloud)
+plt.axis("off")
+plt.tight_layout(pad=0)
+plt.show()
+
+# Top 10 words histogram
+top_words = Counter(wc_training_texts.split()).most_common(10)
+top_words_df = pd.DataFrame(top_words, columns=['word', 'freq'])
+plt.figure(figsize=(12, 15))
+sns.barplot(x="freq", y="word", data=top_words_df)
+plt.title(f"Top {10} words in tweets")
+plt.show()
+
+# check if the file exists
+if os.path.isfile('sentiment_classifier.pickle'):
+    print("File exists...loading the classifier\n")
+    with open('sentiment_classifier.pickle', 'rb') as file:
+        # Load the classifier
+        clf = pickle.load(file)
+else:
+    print("Model does not exist...training the classifier\n")
+    with open('sentiment_classifier.pickle', 'wb') as file:
+        # Train Decision Tree Classifier
+        clf = DecisionTreeClassifier.train(train_features)
+        print("saving the classifier...\n")
+        pickle.dump(clf, file)
+        
+# Confusion Matrix
+predicted_labels = [clf.classify(feats) for feats, _ in test_features]
+
+cm = confusion_matrix(test_labels, predicted_labels, labels=[1, 0])
+fig, ax = plt.subplots(figsize=(8, 8))
+sns.heatmap(cm, annot=True, fmt='d', xticklabels=['positive', 'negative'], yticklabels=['positive', 'negative'], cmap='cividis')
+plt.ylabel('Actual')
+plt.xlabel('Predicted')
+plt.title('Confusion matrix for Sentiment Analysis TFIDF DT')
+plt.show()
 
 # Evaluate the classifier on test data
 accuracy = nltk.classify.accuracy(clf, test_features) * 100
