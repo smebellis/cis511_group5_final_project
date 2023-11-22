@@ -37,7 +37,7 @@ while len(rows_accumulated) < total_rows:
 
 # Write a CSV file incrementally within the loop
 if rows_accumulated:
-    with open("Train_sentiment_dataset.csv", "w", newline='', encoding='utf-8') as csvfile:
+    with open("train_sentiment_dataset.csv", "w", newline='', encoding='utf-8') as csvfile:
         fieldnames = ['text', 'label']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
