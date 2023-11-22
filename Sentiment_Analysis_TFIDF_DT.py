@@ -64,7 +64,7 @@ def read_csv(file_path):
     return texts, labels
 
 
-train_texts, train_labels = read_csv('Train_sentiment_dataset.csv')
+train_texts, train_labels = read_csv('Train_sentiment_dataset.csv') #read csv
 test_texts, test_labels = read_csv('test_sentiment_dataset.csv')
 
 # Step 3: Calculate TF-IDF Vectors
