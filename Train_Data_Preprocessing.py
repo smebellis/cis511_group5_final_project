@@ -2,17 +2,17 @@ import csv
 import requests
 import time
 
-# URL and parameters
+# URL and parameters for Hugging face train dataset
 base_url = "https://datasets-server.huggingface.co/rows"
 dataset = "imdb"
 config = "plain_text"
 split = "train"
-total_rows = 2000
+total_rows = 3000
 batch_size = 100
-
 rows_accumulated = []
-offset = 11500
+offset = 10500
 
+# Getting data from the URL
 while len(rows_accumulated) < total_rows:
     url = f"{base_url}?dataset={dataset}&config={config}&split={split}&offset={offset}&length={batch_size}"
     response = requests.get(url)
@@ -27,15 +27,14 @@ while len(rows_accumulated) < total_rows:
 
         rows_accumulated.extend(rows)
         offset += batch_size
-        time.sleep(5)  # Introducing a 1-second delay between requests
+        time.sleep(5)
     elif response.status_code == 500:
-        print(response.content)  # Print server response for debugging
-        time.sleep(5)  # Adjust delay as needed and retry
+        time.sleep(5)
     else:
         print("Failed to fetch the data. Status code:", response.status_code)
         break
 
-# Write a CSV file incrementally within the loop
+# Storing data in CSV file
 if rows_accumulated:
     with open("train_sentiment_dataset.csv", "w", newline='', encoding='utf-8') as csvfile:
         fieldnames = ['text', 'label']
@@ -47,6 +46,6 @@ if rows_accumulated:
             label = row.get('row', {}).get('label', '')
             writer.writerow({'text': text, 'label': label})
 
-    print("CSV file created successfully!")
+    print("Train data CSV file created successfully!")
 else:
-    print("No data fetched.")
+    print("Train File creation failed.")

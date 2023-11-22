@@ -1,13 +1,16 @@
 import math
-
 import csv
 import re
 import nltk
-from nltk import DecisionTreeClassifier
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.tree import DecisionTreeClassifier
 from nltk.corpus import stopwords
+from sklearn.metrics import accuracy_score
+
+nltk.download('stopwords')
 
 
-# Step 1: Implement TF-IDF
+# Function for calculating TF
 def calculate_tf(text):
     words = text.split()
     word_freq = {}
@@ -18,6 +21,7 @@ def calculate_tf(text):
     return tf
 
 
+# Function for calculating IDF
 def calculate_idf(documents):
     word_doc_count = {}
     for doc in documents:
@@ -32,31 +36,24 @@ def calculate_tfidf(tf, idf):
     return {word: tf[word] * idf.get(word, 0) for word in tf}
 
 
-# Download NLTK stopwords if not already downloaded
-nltk.download('stopwords')
-
-
-# Function to clean text
+# Cleaning data by removing stopwords and special symbols
 def clean_text(text):
-    # Remove special symbols and links
     text = re.sub(r'http\S+|www.\S+', '', text)
     text = re.sub(r'[^\w\s]', ' ', text)
-    # Remove continuous punctuation
     text = re.sub(r'(\W)\1+', r'\1', text)
-    # Remove stopwords using NLTK
     stop_words = set(stopwords.words('english'))
     words = text.lower().split()
     cleaned_words = [word for word in words if word not in stop_words]
     return ' '.join(cleaned_words)
 
 
-# Step 2: Read and Prepare Data
+# Reading train and test datasets
 def read_csv(file_path):
     texts = []
     labels = []
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         csv_reader = csv.reader(file)
-        next(csv_reader)  # Skip header
+        next(csv_reader)
         for row in csv_reader:
             cleaned_text = clean_text(row[0])
             texts.append(cleaned_text)
@@ -64,10 +61,10 @@ def read_csv(file_path):
     return texts, labels
 
 
-train_texts, train_labels = read_csv('Train_sentiment_dataset.csv') #read csv
+train_texts, train_labels = read_csv('train_sentiment_dataset.csv')
 test_texts, test_labels = read_csv('test_sentiment_dataset.csv')
 
-# Step 3: Calculate TF-IDF Vectors
+# Calculating TF-IDF Vectors for train and test data
 train_idf = calculate_idf(train_texts)
 train_tfidf_vectors = []
 for text in train_texts:
@@ -78,21 +75,28 @@ for text in train_texts:
 test_tfidf_vectors = []
 for text in test_texts:
     tf = calculate_tf(text)
-    tfidf = calculate_tfidf(tf,train_idf)  # Use the IDF from training data This ensures consistency in the IDF values used for both training and test data, preventing errors related to missing IDF values for test data words.
+    tfidf = calculate_tfidf(tf, train_idf)
     test_tfidf_vectors.append(tfidf)
 
 
-# Convert TF-IDF vectors into feature sets
+# Creating Feature vector as TF-IDF values
 def tfidf_to_features(tfidf_vector):
     return dict(zip(tfidf_vector.keys(), tfidf_vector.values()))
 
 
-train_features = [(tfidf_to_features(vector), label) for vector, label in zip(train_tfidf_vectors, train_labels)]
-test_features = [(tfidf_to_features(vector), label) for vector, label in zip(test_tfidf_vectors, test_labels)]
+train_features = [tfidf_to_features(vector) for vector in train_tfidf_vectors]
+test_features = [tfidf_to_features(vector) for vector in test_tfidf_vectors]
 
-# Train Decision Tree Classifier
-clf = DecisionTreeClassifier.train(train_features)
+# Training decision tree model and predicting labels for test data
+vectorizer = DictVectorizer(sparse=False)
+X_train = vectorizer.fit_transform(train_features)
+X_test = vectorizer.transform(test_features)
+y_train = train_labels
+y_test = test_labels
 
-# Evaluate the classifier on test data
-accuracy = nltk.classify.accuracy(clf, test_features) * 100
+clf = DecisionTreeClassifier()
+clf.fit(X_train, y_train)
+
+predictions = clf.predict(X_test)
+accuracy = accuracy_score(y_test, predictions) * 100
 print(f"Accuracy: {accuracy:.2f}%")

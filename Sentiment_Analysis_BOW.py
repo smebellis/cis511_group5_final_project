@@ -4,22 +4,27 @@ from nltk.corpus import stopwords
 import string
 import re
 
+# Getting stopwords and punctuations
 nltk.download('stopwords')
-
-data = pd.read_csv("train_sentiment_dataset.csv")
-
-sentiment_mapping = {0: 'negative', 1: 'positive'}
-
 stopwords_list = set(stopwords.words('english'))
 punctuations = string.punctuation
 
+# Reading train and test data file
+train_data = pd.read_csv("train_sentiment_dataset.csv")
+test_data = pd.read_csv("test_sentiment_dataset.csv")
+
+# Variable initializations
+sentiment_mapping = {0: 'negative', 1: 'positive'}
 positive_word_counts = {}
 negative_word_counts = {}
+original_test_labels={}
+predicted_test_labels = {}
 
-for index, row in data.iterrows():
+# Creating Bag-of-words for positive and negative words in train dataset
+for index, row in train_data.iterrows():
     sentiment = sentiment_mapping[row['label']]
     text = row['text']
-    words = re.findall(r'\b\w+\b', text.lower())  # Extract valid words using regex
+    words = re.findall(r'\b\w+\b', text.lower())
     for word in words:
         if word not in stopwords_list:
             if sentiment == 'positive':
@@ -33,22 +38,14 @@ for index, row in data.iterrows():
                 else:
                     negative_word_counts[word] += 1
 
-test_data = pd.read_csv("test_sentiment_dataset.csv")
-# test_results = []
-# test_words_OG_label=[]
-test_results = {}
-test_words_OG_label={}
-
-
+# Predicting sentiments for test data using Bag-of-words from trained data
 for index, row in test_data.iterrows():
     sentiment = sentiment_mapping[row['label']]
     text = row['text']
     label = row['label']
-    words = re.findall(r'\b\w+\b', text.lower())  # Extract valid words using regex
+    words = re.findall(r'\b\w+\b', text.lower())
     words = [word for word in words if word not in stopwords_list]
-    test_words_OG_label[tuple(words)] = label
-    # test_words_OG_label.append((words,label))
-
+    original_test_labels[tuple(words)] = label
     positive_count = sum(positive_word_counts.get(word, 0) for word in words)
     negative_count = sum(negative_word_counts.get(word, 0) for word in words)
 
@@ -56,15 +53,14 @@ for index, row in test_data.iterrows():
         predicted_sentiment = 1
     else:
         predicted_sentiment = 0
+    predicted_test_labels[tuple(words)] = predicted_sentiment
 
-    # test_results.append((words, predicted_sentiment))
-    test_results[tuple(words)] = predicted_sentiment
-
+# Calculating the accuracy for Bad-of-words model
 correct_predictions = 0
-total_predictions = len(test_words_OG_label)
+total_predictions = len(original_test_labels)
 
-for words, predicted_sentiment in test_results.items():
-    original_label = test_words_OG_label.get(words)
+for words, predicted_sentiment in predicted_test_labels.items():
+    original_label = original_test_labels.get(words)
     if original_label is not None and original_label == predicted_sentiment:
         correct_predictions += 1
 
