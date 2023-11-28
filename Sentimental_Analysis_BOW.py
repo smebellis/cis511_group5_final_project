@@ -3,10 +3,11 @@ import nltk
 from nltk.corpus import stopwords
 import string
 import re
+import matplotlib.pyplot as plt
 
 nltk.download('stopwords')
 
-data = pd.read_csv("train_sentiment_dataset.csv")
+data = pd.read_csv("Train_sentiment_dataset.csv")
 
 sentiment_mapping = {0: 'negative', 1: 'positive'}
 
@@ -70,3 +71,35 @@ for words, predicted_sentiment in test_results.items():
 
 accuracy = (correct_predictions / total_predictions) * 100
 print(f"Accuracy: {accuracy:.2f}%")
+
+# Step 5: Evaluate the BOW on test data
+random_guess_accuracy = 50  # Assuming a baseline (like random guessing)
+print(f"Random Guess Accuracy: {random_guess_accuracy}%")
+
+improvement = accuracy - random_guess_accuracy
+print(f"Improvement Over Baseline: {improvement:.2f}%")
+
+def display_model_accuracy(improvement, random_guess_accuracy, model_accuracy):
+
+    # Data to be plotted
+    accuracies = [random_guess_accuracy, model_accuracy]
+    labels = ['Random Guess', 'Model Accuracy']
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+    plt.bar(labels, accuracies, color=['blue', 'green', 'red'])
+    plt.xlabel('Method')
+    plt.ylabel('Accuracy (%)')
+    plt.title('Comparison of BOW Accuracy with Baselines')
+    plt.ylim(0, 100)  # Set y-axis range for clarity
+
+    # Annotating the improvement
+    plt.annotate(f'Improvement: {improvement:.2f}%', 
+                xy=('Model Accuracy', model_accuracy), 
+                xytext=(1, model_accuracy+5),
+                arrowprops=dict(facecolor='black', arrowstyle='->'),
+                ha='center')
+
+    plt.show()
+    
+display_model_accuracy(improvement, random_guess_accuracy, accuracy)
