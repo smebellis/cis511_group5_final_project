@@ -1,6 +1,5 @@
 from collections import Counter
 import math
-
 import csv
 import re
 import nltk
@@ -8,16 +7,12 @@ from nltk import DecisionTreeClassifier
 from nltk.corpus import stopwords
 import pandas as pd
 from sklearn.metrics import confusion_matrix
-
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 import pickle
 import os.path
 
-# Download NLTK stopwords if not already downloaded
-nltk.download('stopwords')
 
 # Step 1: Implement TF-IDF
 def calculate_tf(text):
@@ -68,29 +63,12 @@ def read_csv(file_path):
             labels.append(int(row[1]))
     return texts, labels
 
-train_texts, train_labels = read_csv('Train_sentiment_dataset.csv') #read csv
-test_texts, test_labels = read_csv('test_sentiment_dataset.csv')
-
-# Step 3: Calculate TF-IDF Vectors
-train_idf = calculate_idf(train_texts)
-train_tfidf_vectors = []
-for text in train_texts:
-    tf = calculate_tf(text)
-    tfidf = calculate_tfidf(tf, train_idf)
-    train_tfidf_vectors.append(tfidf)
-
-test_tfidf_vectors = []
-for text in test_texts:
-    tf = calculate_tf(text)
-    tfidf = calculate_tfidf(tf,train_idf)  # Use the IDF from training data This ensures consistency in the IDF values used for both training and test data, preventing errors related to missing IDF values for test data words.
-    test_tfidf_vectors.append(tfidf)
 
 # Convert TF-IDF vectors into feature sets
 def tfidf_to_features(tfidf_vector):
     return dict(zip(tfidf_vector.keys(), tfidf_vector.values()))
 
-train_features = [(tfidf_to_features(vector), label) for vector, label in zip(train_tfidf_vectors, train_labels)]
-test_features = [(tfidf_to_features(vector), label) for vector, label in zip(test_tfidf_vectors, test_labels)]
+
 
 def display_wordcloud(train_texts):
     
@@ -146,11 +124,10 @@ def calculate_most_frequent_class_baseline(labels):
 
     return baseline_accuracy, most_common_label
 
-# Step 4: Train and Evaluate Classifier
-clf = check_model_exists('sentiment_classifier.pickle') 
+
 
 # Display Confusion Matrix
-def display_confusion_matrix(test_labels, test_features):
+def display_confusion_matrix(test_labels, test_features, clf):
     predicted_labels = [clf.classify(feats) for feats, _ in test_features]
     cm = confusion_matrix(test_labels, predicted_labels, labels=[1, 0])
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -160,19 +137,6 @@ def display_confusion_matrix(test_labels, test_features):
     plt.title('Confusion matrix for Sentiment Analysis TFIDF DT')
     plt.show()
 
-# Step 5: Evaluate the classifier on test data
-baseline_accuracy, most_common_label = calculate_most_frequent_class_baseline(test_labels)
-print(f"Most common label: {most_common_label}")
-print(f"Most Common Class: {baseline_accuracy:.2f}%")
-
-random_guess_accuracy = 50  # Assuming a baseline (like random guessing)
-print(f"Random Guess Accuracy: {random_guess_accuracy}%")
-
-accuracy = nltk.classify.accuracy(clf, test_features) * 100
-print(f"Accuracy: {accuracy:.2f}%")
-
-improvement = accuracy - baseline_accuracy
-print(f"Improvement Over Baseline: {improvement:.2f}%")
 
 def display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy, model_accuracy):
 
@@ -197,7 +161,51 @@ def display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy
 
     plt.show()
 
-display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy, accuracy)
-display_wordcloud(train_texts)
-display_histogram(train_texts)
-display_confusion_matrix(test_labels, test_features)
+
+def main():
+    # Download NLTK stopwords if not already downloaded
+    nltk.download('stopwords')
+    train_texts, train_labels = read_csv('Train_sentiment_dataset.csv') #read csv
+    test_texts, test_labels = read_csv('test_sentiment_dataset.csv')
+
+    # Step 3: Calculate TF-IDF Vectors
+    train_idf = calculate_idf(train_texts)
+    train_tfidf_vectors = []
+    for text in train_texts:
+        tf = calculate_tf(text)
+        tfidf = calculate_tfidf(tf, train_idf)
+        train_tfidf_vectors.append(tfidf)
+
+    test_tfidf_vectors = []
+    for text in test_texts:
+        tf = calculate_tf(text)
+        tfidf = calculate_tfidf(tf,train_idf)  # Use the IDF from training data This ensures consistency in the IDF values used for both training and test data, preventing errors related to missing IDF values for test data words.
+        test_tfidf_vectors.append(tfidf)
+
+    train_features = [(tfidf_to_features(vector), label) for vector, label in zip(train_tfidf_vectors, train_labels)]
+    test_features = [(tfidf_to_features(vector), label) for vector, label in zip(test_tfidf_vectors, test_labels)]
+
+    # Step 4: Train and Evaluate Classifier
+    clf = check_model_exists('sentiment_classifier.pickle') 
+
+    # Step 5: Evaluate the classifier on test data
+    baseline_accuracy, most_common_label = calculate_most_frequent_class_baseline(test_labels)
+    print(f"Most common label: {most_common_label}")
+    print(f"Most Common Class: {baseline_accuracy:.2f}%")
+
+    random_guess_accuracy = 50  # Assuming a baseline (like random guessing)
+    print(f"Random Guess Accuracy: {random_guess_accuracy}%")
+
+    accuracy = nltk.classify.accuracy(clf, test_features) * 100
+    print(f"Accuracy: {accuracy:.2f}%")
+
+    improvement = accuracy - baseline_accuracy
+    print(f"Improvement Over Baseline: {improvement:.2f}%")
+
+    display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy, accuracy)
+    display_wordcloud(train_texts)
+    display_histogram(train_texts)
+    display_confusion_matrix(test_labels, test_features, clf)
+
+if __name__ == "__main__":
+    main()
