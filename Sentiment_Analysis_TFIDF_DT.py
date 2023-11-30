@@ -2,6 +2,7 @@ from collections import Counter
 import math
 import csv
 import re
+import json
 import nltk
 from nltk import DecisionTreeClassifier
 from nltk.corpus import stopwords
@@ -206,6 +207,10 @@ def main():
     display_wordcloud(train_texts)
     display_histogram(train_texts)
     display_confusion_matrix(test_labels, test_features, clf)
+    
+    model_name = 'Sentiment_Analysis_TFIDF_DT'
+    with open(f'{model_name}_accuracy.json', 'w') as file:
+        json.dump({'model': model_name, 'accuracy': accuracy}, file)
 
 if __name__ == "__main__":
     main()

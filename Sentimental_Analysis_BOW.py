@@ -3,6 +3,7 @@ import nltk
 from nltk.corpus import stopwords
 import string
 import re
+import json
 import matplotlib.pyplot as plt
 
 nltk.download('stopwords')
@@ -101,5 +102,9 @@ def display_model_accuracy(improvement, random_guess_accuracy, model_accuracy):
                 ha='center')
 
     plt.show()
+
+model_name = 'BOW'
+with open(f'{model_name}_accuracy.json', 'w') as file:
+    json.dump({'model': model_name, 'accuracy': accuracy}, file)
     
 display_model_accuracy(improvement, random_guess_accuracy, accuracy)
