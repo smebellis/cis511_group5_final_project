@@ -5,7 +5,9 @@
 - Training the classifier
 - Classifying data
 - Visualize Data
-- 
+-!
+[Figure_7](https://github.com/smebellis/cis511_group5_final_project/assets/35114616/8ce3b7b2-5e4f-4f96-9bec-ee63c36249c6)
+![Figure_6](https://github.com/smebellis/cis511_group5_final_project/assets/35114616/dafee9bb-3428-4918-92c8-ef961b8bce82)
 ![Figure_4](https://github.com/smebellis/cis511_group5_final_project/assets/35114616/78c15365-227b-4934-b21a-441956ec660c)
 ![Figure_3](https://github.com/smebellis/cis511_group5_final_project/assets/35114616/0b0d5f02-505a-43e4-9f02-826528772082)
 ![Figure_2](https://github.com/smebellis/cis511_group5_final_project/assets/35114616/3b897e98-3aae-4697-a4a6-4eda45713a9a)
