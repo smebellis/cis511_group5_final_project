@@ -15,7 +15,7 @@ import pickle
 import os.path
 
 
-# Step 1: Implement TF-IDF
+# Function for calculating TF
 def calculate_tf(text):
     words = text.split()
     word_freq = {}
@@ -25,6 +25,8 @@ def calculate_tf(text):
     tf = {word: freq / max_freq for word, freq in word_freq.items()}
     return tf
 
+
+# Function for calculating IDF
 def calculate_idf(documents):
     word_doc_count = {}
     for doc in documents:
@@ -34,30 +36,30 @@ def calculate_idf(documents):
     idf = {word: math.log(len(documents) / count) for word, count in word_doc_count.items()}
     return idf
 
+
 def calculate_tfidf(tf, idf):
     return {word: tf[word] * idf.get(word, 0) for word in tf}
 
-# Function to clean text
+
+# Cleaning data by removing stopwords and special symbols
 def clean_text(text):
-    # Remove special symbols and links
     text = re.sub(r'http\S+|www.\S+', '', text)
     text = re.sub(r'[^\w\s]', ' ', text)
-    text = re.sub(r'br', ' ', text)
-    # Remove continuous punctuation
     text = re.sub(r'(\W)\1+', r'\1', text)
-    # Remove stopwords using NLTK
+    text = re.sub(r'br', ' ', text)
     stop_words = set(stopwords.words('english'))
     words = text.lower().split()
     cleaned_words = [word for word in words if word not in stop_words]
     return ' '.join(cleaned_words)
 
-# Step 2: Read and Prepare Data
+
+# Reading train and test datasets
 def read_csv(file_path):
     texts = []
     labels = []
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         csv_reader = csv.reader(file)
-        next(csv_reader)  # Skip header
+        next(csv_reader)
         for row in csv_reader:
             cleaned_text = clean_text(row[0])
             texts.append(cleaned_text)
@@ -65,14 +67,12 @@ def read_csv(file_path):
     return texts, labels
 
 
-# Convert TF-IDF vectors into feature sets
+# Creating Feature vector as TF-IDF values
 def tfidf_to_features(tfidf_vector):
     return dict(zip(tfidf_vector.keys(), tfidf_vector.values()))
 
 
-
 def display_wordcloud(train_texts):
-    
     wc_training_texts = ' '.join(train_texts)
     # Generate a word cloud image
     wordcloud = WordCloud(width=800, height=400).generate(wc_training_texts)
@@ -82,9 +82,9 @@ def display_wordcloud(train_texts):
     plt.axis("off")
     plt.tight_layout(pad=0)
     plt.show()
-    
+
+
 def display_histogram(train_texts):
-    
     wc_training_texts = ' '.join(train_texts)
     # Top 10 words histogram
     top_words = Counter(wc_training_texts.split()).most_common(10)
@@ -94,8 +94,8 @@ def display_histogram(train_texts):
     plt.title(f"Top {10} words in tweets")
     plt.show()
 
+
 def check_model_exists(filename):
-    
     # check if the file exists
     if os.path.isfile(f'{filename}'):
         print("File exists...loading the classifier\n")
@@ -110,8 +110,9 @@ def check_model_exists(filename):
             print('Classifier trained successfully...\n')
             pickle.dump(clf, file)
             print("Classifier Saved successfully...\n")
-        
+
     return clf
+
 
 def calculate_most_frequent_class_baseline(labels):
     # Count the frequency of each label
@@ -126,13 +127,13 @@ def calculate_most_frequent_class_baseline(labels):
     return baseline_accuracy, most_common_label
 
 
-
 # Display Confusion Matrix
 def display_confusion_matrix(test_labels, test_features, clf):
     predicted_labels = [clf.classify(feats) for feats, _ in test_features]
     cm = confusion_matrix(test_labels, predicted_labels, labels=[1, 0])
     fig, ax = plt.subplots(figsize=(8, 8))
-    sns.heatmap(cm, annot=True, fmt='d', xticklabels=['positive', 'negative'], yticklabels=['positive', 'negative'], cmap='cividis')
+    sns.heatmap(cm, annot=True, fmt='d', xticklabels=['positive', 'negative'], yticklabels=['positive', 'negative'],
+                cmap='cividis')
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
     plt.title('Confusion matrix for Sentiment Analysis TFIDF DT')
@@ -140,7 +141,6 @@ def display_confusion_matrix(test_labels, test_features, clf):
 
 
 def display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy, model_accuracy):
-
     # Data to be plotted
     accuracies = [baseline_accuracy, random_guess_accuracy, model_accuracy]
     labels = ['Most Common Class', 'Random Guess', 'Model Accuracy']
@@ -154,11 +154,11 @@ def display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy
     plt.ylim(0, 100)  # Set y-axis range for clarity
 
     # Annotating the improvement
-    plt.annotate(f'Improvement: {improvement:.2f}%', 
-                xy=('Model Accuracy', model_accuracy), 
-                xytext=(1, model_accuracy+5),
-                arrowprops=dict(facecolor='black', arrowstyle='->'),
-                ha='center')
+    plt.annotate(f'Improvement: {improvement:.2f}%',
+                 xy=('Model Accuracy', model_accuracy),
+                 xytext=(1, model_accuracy + 5),
+                 arrowprops=dict(facecolor='black', arrowstyle='->'),
+                 ha='center')
 
     plt.show()
 
@@ -166,10 +166,10 @@ def display_model_accuracy(improvement, baseline_accuracy, random_guess_accuracy
 def main():
     # Download NLTK stopwords if not already downloaded
     nltk.download('stopwords')
-    train_texts, train_labels = read_csv('Train_sentiment_dataset.csv') #read csv
+    train_texts, train_labels = read_csv('train_sentiment_dataset.csv')  # read csv
     test_texts, test_labels = read_csv('test_sentiment_dataset.csv')
 
-    # Step 3: Calculate TF-IDF Vectors
+    # Calculating TF-IDF Vectors for train and test data
     train_idf = calculate_idf(train_texts)
     train_tfidf_vectors = []
     for text in train_texts:
@@ -180,16 +180,16 @@ def main():
     test_tfidf_vectors = []
     for text in test_texts:
         tf = calculate_tf(text)
-        tfidf = calculate_tfidf(tf,train_idf)
+        tfidf = calculate_tfidf(tf, train_idf)
         test_tfidf_vectors.append(tfidf)
 
     train_features = [(tfidf_to_features(vector), label) for vector, label in zip(train_tfidf_vectors, train_labels)]
     test_features = [(tfidf_to_features(vector), label) for vector, label in zip(test_tfidf_vectors, test_labels)]
 
-    # Step 4: Train and Evaluate Classifier
-    clf = check_model_exists('sentiment_classifier.pickle') 
+    # Train and Evaluate Classifier
+    clf = check_model_exists('sentiment_classifier.pickle')
 
-    # Step 5: Evaluate the classifier on test data
+    # Evaluate the classifier on test data
     baseline_accuracy, most_common_label = calculate_most_frequent_class_baseline(test_labels)
     print(f"Most common label: {most_common_label}")
     print(f"Most Common Class: {baseline_accuracy:.2f}%")
@@ -207,10 +207,11 @@ def main():
     display_wordcloud(train_texts)
     display_histogram(train_texts)
     display_confusion_matrix(test_labels, test_features, clf)
-    
+
     model_name = 'Sentiment_Analysis_TFIDF_DT'
     with open(f'{model_name}_accuracy.json', 'w') as file:
         json.dump({'model': model_name, 'accuracy': accuracy}, file)
+
 
 if __name__ == "__main__":
     main()
