@@ -180,7 +180,7 @@ def main():
     test_tfidf_vectors = []
     for text in test_texts:
         tf = calculate_tf(text)
-        tfidf = calculate_tfidf(tf,train_idf)  # Use the IDF from training data This ensures consistency in the IDF values used for both training and test data, preventing errors related to missing IDF values for test data words.
+        tfidf = calculate_tfidf(tf,train_idf)
         test_tfidf_vectors.append(tfidf)
 
     train_features = [(tfidf_to_features(vector), label) for vector, label in zip(train_tfidf_vectors, train_labels)]
