@@ -1,7 +1,7 @@
 import csv
 import requests
 
-# URL and parameters
+# URL and parameters for Hugging face test dataset
 base_url = "https://datasets-server.huggingface.co/rows"
 dataset = "tweet_eval"
 config = "sentiment"
@@ -12,6 +12,7 @@ batch_size = 100
 rows_accumulated = []
 offset = 0
 
+# Getting data from the URL
 while len(rows_accumulated) < total_rows:
     url = f"{base_url}?dataset={dataset}&config={config}&split={split}&offset={offset}&length={batch_size}"
     response = requests.get(url)
@@ -29,7 +30,7 @@ while len(rows_accumulated) < total_rows:
         print("Failed to fetch the data. Status code:", response.status_code)
         break
 
-# Write a CSV file
+# Storing data in CSV file
 if rows_accumulated:
     with open("test_sentiment_dataset.csv", "w", newline='', encoding='utf-8') as csvfile:
         fieldnames = ['text', 'label']
@@ -43,12 +44,6 @@ if rows_accumulated:
                     label = 1
                 text = row.get('row', {}).get('text', '')
                 writer.writerow({'text': text, 'label': label})
-
-            # text = row.get('row', {}).get('text', '')
-            # label = row.get('row', {}).get('label', '')
-            # print(type(label))
-            # writer.writerow({'text': text, 'label': label})
-
     print("CSV file created successfully!")
 else:
     print("No data fetched.")
